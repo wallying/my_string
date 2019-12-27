@@ -11,21 +11,21 @@
 
 void *mem_set(void *buf, int val, unsigned int num)
 {
-    void *ptr = buf;
+    char *ptr = buf;
     while (num--) {
-        *(char *)buf++ = (char)val;
+        *ptr++ = (char)val;
     }
-    return ptr;
+    return buf;
 }
 
 
 void *mem_cpy(void *dst, const void *src, unsigned int num)
 {
-    void *ptr = dst;
+    char *ptr = dst;
     while (num--) {
-        *(char *)dst++ = *(char *)src++;
+        *ptr++ = *(char *)src++;
     }
-    return ptr;
+    return dst;
 }
 
 
@@ -52,7 +52,7 @@ int mem_cmp(const void *buf1, const void *buf2, unsigned int num)
 {
     int ret = 0;
     while (num--) {
-        if ((ret = *(char *)buf1++ - * (char *)buf2++) != 0) {
+        if ((ret = *(char *)buf1++ - *(char *)buf2++) != 0) {
             break;
         }
     }
@@ -63,31 +63,29 @@ int mem_cmp(const void *buf1, const void *buf2, unsigned int num)
 char *str_cpy(char *dst, const char *src)
 {
     char *ptr = dst;
-    while ((*dst++ = *src++) != '\0');
-    return ptr;
+    for (; (*ptr = *src); ++ptr, ++src);
+    return dst;
 }
 
 
 char *str_ncpy(char *dst, const char *src, unsigned int num)
 {
     char *ptr = dst;
-    while (num--) {
-        if ((*dst++ = *src) != '\0') {
+    for (; num; --num) {
+        if ((*ptr++ = *src) != '\0') {
             ++src;
         }
     }
-    return ptr;
+    return dst;
 }
 
 
 char *str_cat(char *dst, const char *src)
 {
     char *ptr = dst;
-    while (*dst) {
-        ++dst;
-    }
-    while ((*dst++ = *src++) != '\0');
-    return ptr;
+    for (; *ptr; ++ptr);
+    for (; (*ptr = *src); ++ptr, ++src);
+    return dst;
 }
 
 
@@ -95,15 +93,11 @@ char *str_ncat(char *dst, const char *src, unsigned int num)
 {
     char *ptr = dst;
     if (num) {
-        while (*dst) {
-            ++dst;
-        }
-        while ((*dst++ = *src++) != '\0' && !--num) {
-            *dst = '\0';
-            break;
-        }
+        for (; *ptr; ++ptr);
+        for (; num && (*ptr = *src); --num, ++ptr, ++src);
+        *ptr = '\0';
     }
-    return ptr;
+    return dst;
 }
 
 
@@ -131,9 +125,9 @@ int str_ncmp(const char *str1, const char *str2, unsigned int num)
 }
 
 
-char *str_chr(const char *str, int c)
+char *str_chr(const char *str, int chr)
 {
-    for (; *str != (char)c; ++str) {
+    for (; *str != (char)chr; ++str) {
         if (*str == '\0') {
             return NULL;
         }
@@ -142,10 +136,10 @@ char *str_chr(const char *str, int c)
 }
 
 
-char *str_nchr(const char *str, unsigned int num, int c)
+char *str_nchr(const char *str, unsigned int num, int chr)
 {
     while (num--) {
-        if (*str == (char)c) {
+        if (*str == (char)chr) {
             return (char *)str;
         }
         if (*str++ == '\0') {
@@ -196,15 +190,14 @@ char *str_nstr(const char *str, const char *srch, unsigned int num)
 unsigned int str_len(const char *str)
 {
     const char *ptr = str;
-    for (; *ptr != '\0'; ++ptr);
+    for (; *ptr; ++ptr);
     return ptr - str;
 }
 
 
 #define isspace(c) \
-        (((c) == ' ')  || ((c) == '\r') || \
-         ((c) == '\n') || ((c) == '\f') || \
-         ((c) == '\t') || ((c) == '\v'))
+    (((c) == ' ')  || ((c) == '\n') || ((c) == '\t') || \
+     ((c) == '\r') || ((c) == '\f') || ((c) == '\v'))
 
 char *str_trim(char *str)
 {
@@ -215,16 +208,15 @@ char *str_trim(char *str)
         ++ptr;
     }
 
-    if (ptr != str) {
-        while ((*end++ = *ptr++) != '\0');
+    if (ptr == str) {
+        for (; *end; ++end);
     } else {
-        while (*end++ != '\0');
+        for (; (*end = *ptr); ++end, ++ptr);
     }
 
-    end -= 2;
-    while ((end >= str) && (isspace(*end))) {
+    do {
         --end;
-    }
+    } while ((end >= str) && (isspace(*end)));
     *(end + 1) = '\0';
 
     return str;
